@@ -1,25 +1,34 @@
+```
 // MAVLink system configuration
 #define MAVLINK_SYSTEM_ID 1
 #define MAVLINK_COMPONENT_ID 1
 #define MAVLINK_TARGET_SYSTEM 1
 #define MAVLINK_TARGET_COMPONENT 1
+```
 Define the system and component ids as well as the target system and component where messages throughout the drone’s navigation will be sent to. We essentially have one system/component right now.
 
+```
 #define MAVLINK_COMM_CHANNEL MAVLINK_COMM_0
+```
 Corresponds to the channel of communication.
 
+```
 // Define constants for navigating waypoints
 #define NAV_CMD_WAYPOINT 16
 #define FRAME_GLOBAL_RELATIVE_ALT 3
 #define ALTITUDE 10.0f // Altitude in meters
-https://mavlink.io/en/messages/common.html 
+https://mavlink.io/en/messages/common.html
+```
 Value of 16 corresponds to the MavLink command ID for a waypoint for the drone’s mission. The value of 3 for the FRAME_GLOBAL_RELATIVE_ALT specifies that the coordinates are in a global frame with relative altitude. The altitude is going to be the altitude of the drone. I have inputted 10 as a fill-in value and it can be changed.
 
+```
 // Serial device and baudrate
 const int BAUDRATE = 115200;
 const char *DEVICE = ""; // Serial device connected to the flight controller
+```
 Here, we initialize a value for the baud rate for serial communication and declare a constant string for the serial device name.
 
+```
 void send_heartbeat(int fd)
 {
    mavlink_message_t msg;
@@ -39,10 +48,12 @@ void send_heartbeat(int fd)
    uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
    write(fd, buf, len); // Write to serial port
 }
+```
 Calls mavlink_msg_heartbeat_pack to fill the msg variable:
 MAVLINK_SYSTEM_ID, MAVLINK_COMPONENT_ID, msg, MAV_TYPE_QUADROTOR, MAV_AUTOPILOT_GENERIC, MAV_MODE_MANUAL_ARMED, 0, MAV_STATE_ACTIVE
 Creates buffer to hold serialized message data and sends the serialized message over with a secure connection
 
+```
 void send_mission_count(int fd, int count)
 {
    mavlink_message_t msg;
@@ -62,9 +73,11 @@ void send_mission_count(int fd, int count)
    uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
    write(fd, buf, len);
 }
+```
 Calls mavlink_msg_mission_count_pack to send information about number of waypoints that need to processed for the mission
 Creates buffer to hold serialized message data, packs buffer, then sends serialized message to specific serial port
 
+```
 // Function to send a single waypoint (mission item)
 void send_waypoint(int fd, float lat, float lon, float alt, uint16_t seq)
 {
@@ -95,10 +108,12 @@ void send_waypoint(int fd, float lat, float lon, float alt, uint16_t seq)
    uint16_t len = mavlink_msg_to_send_buffer(buf, &message);
    write(fd, buf, len); // Send the waypoint over the serial port
 }
+```
 Sets the fields of the waypoint structure:
 Target_system, target_component, seq, frame, command, current, autocontinue, param1, param2, param3, param4, x, y, z
 Encodes waypoint information into MavLink message that gets sent over the serial connection
 
+```
 // Function to wait for an acknowledgment from the flight controller
 bool wait_for_ack(int fd)
 {
@@ -120,10 +135,12 @@ bool wait_for_ack(int fd)
    }
    return false; // No acknowledgment
 }
+```
 Read data from the serial port into the buffer
 Each byte is processed with the mavlink_parse_char() function, which checks if the byte is part of a complete Mavlink message 
 Inside the loop we check if the message has been received or not and return whether this is true or false accordingly
 
+```
 // Function to start the mission after all waypoints are sent
 void start_mission(int fd)
 {
@@ -144,9 +161,11 @@ void start_mission(int fd)
    uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
    write(fd, buf, len); // Send the command to start the mission
 }
+```
 Construct a mavlink_msg_command_long_pack which utilizes information regarding the drone → send the serialized message via serial port
 The message that is sent helps move the drone from position of preparation to beginning its flight
 
+```
 // Function to set the drone's mode to AUTO (to execute the mission)
 void set_mode_auto(int fd)
 {
@@ -166,8 +185,10 @@ void set_mode_auto(int fd)
    uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
    write(fd, buf, len);
 }
+```
 Shifts the drone’s mode from manual to auto and sends the message over the serial port
 
+```
 // Function to simulate navigation by sending waypoints
 void navigate_through_pois(int fd)
 {
@@ -209,11 +230,13 @@ void navigate_through_pois(int fd)
    // Start the mission
    start_mission(fd);
 }
+```
 Calculate number of POIs and send the number of waypoints through send_mission_count()
 Iterates through each POI, retrieves its latitude and longitude, and calls the send_waypoint() function to send each waypoint to the drone → Checks for an acknowledgement from the drone using wait_for_ack()
 Include delays to ensure for smooth communication
 Start mission once all waypoints are processed
 
+```
 int main(int argc, char *argv[])
 {
    // Open the serial connection
@@ -247,6 +270,7 @@ int main(int argc, char *argv[])
    close(fd);
    return 0;
 }
+```
 First, attempts to open a serial port defined by the DEVICE constant
 Store current options for the terminal interface
 Establishing a reliable serial connection between your application and the drone's flight controller
